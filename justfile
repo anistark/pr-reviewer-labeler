@@ -31,40 +31,47 @@ build:
 # Run all checks (format, typecheck, test, build)
 all: format-check check test build
 
-# Publish a new release. Usage: just publish 1.0.0 or just publish 1.0.0 "My release title"
-publish version title="":
+# Publish a new release. Reads version from package.json, prompts for title.
+publish:
     #!/usr/bin/env bash
     set -euo pipefail
 
-    # Validate version format
-    if ! echo "{{version}}" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-        echo "Error: version must be semver (e.g., 1.0.0)"
+    # Read version from package.json
+    VERSION=$(node -p "require('./package.json').version")
+
+    if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+        echo "Error: invalid version '$VERSION' in package.json"
         exit 1
     fi
 
-    MAJOR=$(echo "{{version}}" | cut -d. -f1)
-    TITLE="{{title}}"
+    MAJOR=$(echo "$VERSION" | cut -d. -f1)
+
+    echo "Publishing v${VERSION}..."
+    echo ""
+
+    # Prompt for release title
+    read -p "Release title (enter to use 'v${VERSION}'): " TITLE
     if [ -z "$TITLE" ]; then
-        TITLE="v{{version}}"
+        TITLE="v${VERSION}"
     fi
 
     # Run all checks first
     just all
 
     # Create and push the version tag
-    git tag -a "v{{version}}" -m "Release v{{version}}"
-    git push origin "v{{version}}"
+    git tag -a "v${VERSION}" -m "Release v${VERSION}"
+    git push origin "v${VERSION}"
 
     # Move the major version tag (e.g., v1) for rolling updates
-    git tag -fa "v${MAJOR}" -m "Update v${MAJOR} tag to v{{version}}"
+    git tag -fa "v${MAJOR}" -m "Update v${MAJOR} tag to v${VERSION}"
     git push origin "v${MAJOR}" --force
 
     # Create GitHub release with auto-generated notes
     # NOTE: For the first release, use the GitHub UI to check
     # "Publish this Action to the GitHub Marketplace".
     # Subsequent releases auto-appear on the marketplace.
-    gh release create "v{{version}}" \
+    gh release create "v${VERSION}" \
         --title "$TITLE" \
         --generate-notes
 
-    echo "Published v{{version}} as '$TITLE' (v${MAJOR} tag updated)"
+    echo "Published v${VERSION} as '$TITLE' (v${MAJOR} tag updated)"
