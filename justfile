@@ -55,8 +55,8 @@ publish:
         TITLE="v${VERSION}"
     fi
 
-    # Run all checks first
-    just all
+    # Run checks (no build — CI handles dist/)
+    just format-check check test
 
     # Ensure we're in sync with remote (CI may have pushed a dist/ commit)
     git pull --rebase origin main
