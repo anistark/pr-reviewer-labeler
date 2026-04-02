@@ -58,6 +58,9 @@ publish:
     # Run all checks first
     just all
 
+    # Ensure we're in sync with remote (CI may have pushed a dist/ commit)
+    git pull --rebase origin main
+
     # Create and push the version tag
     git tag -a "v${VERSION}" -m "Release v${VERSION}"
     git push origin "v${VERSION}"
