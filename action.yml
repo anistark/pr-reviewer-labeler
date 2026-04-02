@@ -1,0 +1,74 @@
+name: 'PR Reviewer Labeler'
+description: 'Automatically labels pull requests with the ideal number of reviewers based on change size'
+author: 'Kumar Anirudha'
+
+branding:
+  icon: 'users'
+  color: 'blue'
+
+inputs:
+  repo-token:
+    description: 'GitHub token for API access'
+    default: '${{ github.token }}'
+    required: false
+  thresholds:
+    description: |
+      YAML string defining lines-changed → reviewer-count mapping.
+      Example:
+        thresholds: |
+          - lines: 50
+            reviewers: 1
+          - lines: 200
+            reviewers: 2
+          - lines: 500
+            reviewers: 3
+    required: false
+    default: |
+      - lines: 50
+        reviewers: 1
+      - lines: 200
+        reviewers: 2
+      - lines: 500
+        reviewers: 3
+      - lines: 1000
+        reviewers: 4
+  add-label:
+    description: 'Whether to add a reviewer-count label to the PR'
+    default: 'true'
+    required: false
+  add-comment:
+    description: 'Whether to post a comment with the reviewer recommendation'
+    default: 'true'
+    required: false
+  label-prefix:
+    description: 'Prefix for the reviewer label'
+    default: 'reviewers'
+    required: false
+  file-weights:
+    description: |
+      YAML string defining glob → weight multipliers for different file types.
+      Files matching a glob have their line count multiplied by the weight.
+      Example:
+        file-weights: |
+          - glob: "**/*.test.*"
+            weight: 0.5
+          - glob: "**/*.md"
+            weight: 0.25
+          - glob: "src/core/**"
+            weight: 1.5
+    required: false
+    default: ''
+
+outputs:
+  reviewer-count:
+    description: 'The recommended number of reviewers'
+  total-lines:
+    description: 'Total lines changed (additions + deletions)'
+  weighted-lines:
+    description: 'Weighted lines changed (after applying file weights)'
+  label:
+    description: 'The label that was applied (if add-label is true)'
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
